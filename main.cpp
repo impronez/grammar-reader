@@ -2,7 +2,6 @@
 #include "ArgumentsParser.h"
 #include "GrammarReader.h"
 #include <fstream>
-#include <Windows.h>
 
 int main(int argc, char** argv)
 {
