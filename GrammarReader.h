@@ -166,6 +166,11 @@ inline bool IsNonTerm(const std::string& str)
 
 inline void ParseLeftHandGrammarLine(std::stringstream& line, MooreAutomata& automata)
 {
+    if (automata.GetStartState().empty())
+    {
+        automata.SetStartState(BASE_STATE);
+    }
+
     if (automata.IsEmpty())
     {
         automata.AddState(BASE_STATE);
@@ -215,6 +220,11 @@ inline void ParseRightHandGrammarLine(std::stringstream& line, MooreAutomata& au
 
     std::string curNoterm;
     line >> curNoterm;
+
+    if (automata.GetStartState().empty())
+    {
+        automata.SetStartState(curNoterm);
+    }
 
     automata.AddState(curNoterm);
 

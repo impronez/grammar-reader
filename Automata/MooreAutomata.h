@@ -28,6 +28,16 @@ public:
         return m_finalState;
     }
 
+    void SetStartState(const std::string& state)
+    {
+        m_startState = state;
+    }
+
+    [[nodiscard]] std::string GetStartState() const
+    {
+        return m_startState;
+    }
+
     void SetFinalState(const std::string& state)
     {
         m_finalState = state;
@@ -46,6 +56,17 @@ public:
     void AddTransition(const std::string& state, const std::string& term, const std::string& nextState)
     {
         m_statesTransitions[state].AddTransition(term, nextState);
+    }
+
+    void ExportToFile2(const std::string& filename)
+    {
+        std::ofstream outputFile(filename);
+        if (!outputFile.is_open())
+        {
+            throw std::runtime_error("Could not open file " + filename);
+        }
+
+
     }
 
     void ExportToFile(const std::string& outputFilename)
@@ -155,7 +176,7 @@ private:
     {
         std::map<std::string, std::string> newStateNames;
 
-        unsigned i = 0;
+        unsigned i = 1;
         for (auto& state : m_states)
         {
             if (state == m_finalState)
@@ -164,7 +185,18 @@ private:
                 continue;
             }
 
+            if (state == m_startState)
+            {
+                newStateNames[m_startState] = NEW_STATE_CHAR + std::to_string(0);
+                continue;
+            }
+
             newStateNames[state] = NEW_STATE_CHAR + std::to_string(i++);
+        }
+
+        for (auto& it: newStateNames)
+        {
+            std::cout << it.first << ": " << it.second << std::endl;
         }
 
         return newStateNames;
@@ -185,4 +217,5 @@ private:
     std::set<std::string> m_inputs;
     std::map<std::string, Transitions> m_statesTransitions;
     std::string m_finalState = "";
+    std::string m_startState = "";
 };
