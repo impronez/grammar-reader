@@ -82,30 +82,36 @@ public:
         for (auto& input: m_inputs)
         {
             file << input << ";";
-            for (auto& state: m_states)
+            for (int i = 1; auto& state: m_states)
             {
                 if (m_statesTransitions.contains(state) &&
                     m_statesTransitions.at(state).transitions.contains(input))
                 {
                     auto transitions = m_statesTransitions.at(state).transitions.at(input);
 
-                    for (unsigned i = 1; auto& transition: transitions)
+                    for (int j = 0; j < transitions.size(); ++j)
                     {
-                        file << transition;
-                        if (i++ != transitions.size())
+                        file << transitions.at(j);
+                        if (j != transitions.size() - 1)
                         {
                             file << ",";
                         }
                     }
-                    file << ";";
+                    if (i != m_states.size())
+                    {
+                        file << ";";
+                    }
                 }
-                else
+                else if (i != m_states.size())
                 {
                     file << ";";
                 }
+                ++i;
             }
-            file << std::endl;
+            file << "\n";
         }
+
+        file.close();
     }
 
 private:
