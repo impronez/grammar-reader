@@ -275,12 +275,6 @@ inline void ParseRightHandRule(std::stringstream& line, MooreAutomata& automata,
 
 inline void ParseUndefinedLinesInRightHandGrammar(MooreAutomata& automata)
 {
-    if (automata.IsEmpty())
-    {
-        automata.AddState(BASE_STATE);
-        automata.SetFinalState(BASE_STATE);
-    }
-
     for (auto& line: automata.GetUndefinedLines())
     {
         std::stringstream ss(line);
@@ -288,13 +282,12 @@ inline void ParseUndefinedLinesInRightHandGrammar(MooreAutomata& automata)
         std::string curNoterm;
         ss >> curNoterm;
 
-        automata.AddState(curNoterm);
-
         if (automata.GetStartState().empty())
         {
             automata.SetStartState(curNoterm);
         }
 
+        automata.AddState(curNoterm);
 
         ParseRightHandRule(ss, automata, curNoterm);
     }
@@ -304,15 +297,15 @@ inline void ParseUndefinedLinesInRightHandGrammar(MooreAutomata& automata)
 
 inline void ParseRightHandGrammarLine(std::stringstream& line, MooreAutomata& automata)
 {
-    if (!automata.GetUndefinedLines().empty())
-    {
-        ParseUndefinedLinesInRightHandGrammar(automata);
-    }
-
     if (automata.GetFinalState().empty())
     {
         automata.AddState(BASE_STATE);
         automata.SetFinalState(BASE_STATE);
+    }
+
+    if (!automata.GetUndefinedLines().empty())
+    {
+        ParseUndefinedLinesInRightHandGrammar(automata);
     }
 
     std::string curNoterm;

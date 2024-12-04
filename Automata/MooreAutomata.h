@@ -198,11 +198,11 @@ private:
 
             newStateNames[state] = NEW_STATE_CHAR + std::to_string(i++);
         }
-
-        for (auto& it: newStateNames)
-        {
-            std::cout << it.first << ": " << it.second << std::endl;
-        }
+        //
+        // for (auto& it: newStateNames)
+        // {
+        //     std::cout << it.first << ": " << it.second << std::endl;
+        // }
 
         return newStateNames;
     }
