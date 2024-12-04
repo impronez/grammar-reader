@@ -5,7 +5,7 @@
 #include <sstream>
 #include <regex>
 
-#include "../Automata/MooreAutomata.h"
+#include "Automata/MooreAutomata.h"
 
 const std::string RUS_ALPHABET = "абвгдеёжзийклмнопрстуфхцчшщъыьэюяАБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ";
 const std::string NON_TERM = R"(<[\w)" + RUS_ALPHABET + R"(]+>)";
