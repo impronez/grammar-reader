@@ -30,7 +30,8 @@ const std::string RIGHT_HAND_TRANSITION =
     + R"((?:)" + OR + R"((?:)" + TERM + R"()(?:\s+)" + NON_TERM + R"()?)*\s*(\|)?\s*$)";
 
 const std::string ONLY_WITH_TERM_GRAMMAR =
-    R"(^\s*)" + NON_TERM + TO + TERM + R"(\s*$)";
+    R"(^\s*()" + NON_TERM + R"())" + TO + R"((?:)" + R"((?:)" + TERM
+    + R"()|)" + TERM + R"()(?:)" + OR + R"((?:)" + TERM + R"())*\s*$)";
 
 const std::regex LEFT_HAND_GRAMMAR_REG(LEFT_HAND_GRAMMAR);
 const std::regex LEFT_HAND_TRANSITION_REG(LEFT_HAND_TRANSITION);
@@ -100,13 +101,7 @@ inline bool IsOnlyWithTermRule(const std::string& line)
 
 inline bool IsCorrectGrammar(const std::string& line, std::optional<bool>& isLeftHandGrammar)
 {
-    if (IsOnlyWithTermRule(line))
-    {
-        return true;
-    }
-
-    if (isLeftHandGrammar.value() == IsLeftHandRule(line)
-        || !isLeftHandGrammar.value() == IsRightHandRule(line))
+    if (IsLeftHandRule(line) || IsRightHandRule(line) || IsOnlyWithTermRule(line))
     {
         return true;
     }
@@ -114,18 +109,8 @@ inline bool IsCorrectGrammar(const std::string& line, std::optional<bool>& isLef
     return false;
 }
 
-inline std::string GetOneRule(std::istream& input, std::optional<bool>& isLeftHandGrammar, std::string& line)
+inline void JoinRules(std::istream& input, std::string& line)
 {
-    if (!isLeftHandGrammar.has_value())
-    {
-        isLeftHandGrammar = GetTypeOfGrammar(line);
-    }
-
-    if (isLeftHandGrammar.has_value() && IsCorrectGrammar(line, isLeftHandGrammar))
-    {
-        return line;
-    }
-
     while (true)
     {
         std::string nextLine;
@@ -145,8 +130,18 @@ inline std::string GetOneRule(std::istream& input, std::optional<bool>& isLeftHa
             break;
         }
     }
+}
 
-    if (!isLeftHandGrammar.has_value())
+inline std::string GetOneRule(std::istream& input, std::optional<bool>& isLeftHandGrammar, std::string& line)
+{
+    if (IsCorrectGrammar(line, isLeftHandGrammar))
+    {
+        return line;
+    }
+
+    JoinRules(input, line);
+
+    if (!isLeftHandGrammar.has_value() && !IsOnlyWithTermRule(line))
     {
         isLeftHandGrammar = GetTypeOfGrammar(line);
     }
@@ -246,7 +241,7 @@ inline void ParseRightHandGrammarLine(std::stringstream& line, MooreAutomata& au
                 automata.AddState(next);
                 automata.AddTransition(curNoterm, data, next);
             }
-            else //if (next == "|" || next.empty())
+            else
             {
                 automata.AddTransition(curNoterm, data, BASE_STATE);
             }
@@ -256,11 +251,14 @@ inline void ParseRightHandGrammarLine(std::stringstream& line, MooreAutomata& au
     }
 }
 
-inline void ParseLine(MooreAutomata& automata, bool isLeftHandGrammar, const std::string& line)
+inline void ParseLine(MooreAutomata& automata, std::optional<bool>& isLeftHandGrammar, const std::string& line)
 {
     std::stringstream ss(line);
-
-    if (isLeftHandGrammar)
+    if (!isLeftHandGrammar.has_value())
+    {
+        ParseRightHandGrammarLine(ss, automata);
+    }
+    else if (isLeftHandGrammar.value())
     {
         ParseLeftHandGrammarLine(ss, automata);
     }
@@ -273,6 +271,7 @@ inline void ParseLine(MooreAutomata& automata, bool isLeftHandGrammar, const std
 inline void ParseLines(MooreAutomata& automata, std::istream& input)
 {
     std::optional<bool> isLeftHandGrammar;
+    std::string firstState;
 
     while (true)
     {
@@ -286,12 +285,7 @@ inline void ParseLines(MooreAutomata& automata, std::istream& input)
 
         line = GetOneRule(input, isLeftHandGrammar, line);
 
-        if (!isLeftHandGrammar.has_value())
-        {
-            throw std::invalid_argument("Incorrect type of grammar");
-        }
-
-        ParseLine(automata, isLeftHandGrammar.value(), line);
+        ParseLine(automata, isLeftHandGrammar, line);
     }
 }
 
