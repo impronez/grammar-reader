@@ -58,15 +58,19 @@ public:
         m_statesTransitions[state].AddTransition(term, nextState);
     }
 
-    void ExportToFile2(const std::string& filename)
+    [[nodiscard]] std::vector<std::string> GetUndefinedLines() const
     {
-        std::ofstream outputFile(filename);
-        if (!outputFile.is_open())
-        {
-            throw std::runtime_error("Could not open file " + filename);
-        }
+        return m_undefinedLines;
+    }
 
+    void AddUndefinedString(const std::string& line)
+    {
+        m_undefinedLines.push_back(line);
+    }
 
+    void ClearUndefinedLines()
+    {
+        m_undefinedLines.clear();
     }
 
     void ExportToFile(const std::string& outputFilename)
@@ -136,6 +140,7 @@ public:
     }
 
 private:
+    std::vector<std::string> m_undefinedLines;
 
     void SetNewStateNames()
     {
@@ -192,6 +197,11 @@ private:
             }
 
             newStateNames[state] = NEW_STATE_CHAR + std::to_string(i++);
+        }
+
+        for (auto& it: newStateNames)
+        {
+            std::cout << it.first << ": " << it.second << std::endl;
         }
 
         return newStateNames;
