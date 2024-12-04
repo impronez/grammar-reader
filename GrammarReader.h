@@ -90,7 +90,6 @@ inline void SetTypeOfGrammar(std::optional<bool>& isLeftHandGrammar, const std::
     {
         return;
     }
-
     if (IsLeftHandRule(line))
     {
         isLeftHandGrammar = true;
@@ -100,7 +99,6 @@ inline void SetTypeOfGrammar(std::optional<bool>& isLeftHandGrammar, const std::
         isLeftHandGrammar = false;
     }
 }
-
 inline bool IsCorrectGrammar(const std::string& line, std::optional<bool>& isLeftHandGrammar)
 {
     if (IsLeftHandRule(line) || IsRightHandRule(line) || IsOnlyWithTermRule(line))
@@ -139,13 +137,10 @@ inline std::string GetOneRule(std::istream& input, std::optional<bool>& isLeftHa
     if (IsCorrectGrammar(line, isLeftHandGrammar))
     {
         SetTypeOfGrammar(isLeftHandGrammar, line);
-
         return line;
     }
 
     JoinRules(input, line);
-
-    SetTypeOfGrammar(isLeftHandGrammar, line);
 
     if (IsCorrectGrammar(line, isLeftHandGrammar))
     {
@@ -155,13 +150,33 @@ inline std::string GetOneRule(std::istream& input, std::optional<bool>& isLeftHa
     throw std::invalid_argument("Incorrect grammar");
 }
 
+
 inline bool IsNonTerm(const std::string& str)
 {
     return str[0] == '<' && str[str.size() - 1] == '>';
 }
 
-inline void ParseLeftHandRule(std::stringstream& line, MooreAutomata& automata, std::string& inNoterm)
+inline void ParseLeftHandGrammarLine(std::stringstream& line, MooreAutomata& automata)
 {
+    if (automata.GetStartState().empty())
+    {
+        automata.SetStartState(BASE_STATE);
+    }
+
+    if (automata.IsEmpty())
+    {
+        automata.AddState(BASE_STATE);
+    }
+
+    std::string inNoterm;
+    line >> inNoterm;
+
+    automata.AddState(inNoterm);
+    if (automata.GetFinalState().empty())
+    {
+        automata.SetFinalState(inNoterm);
+    }
+
     std::string data;
     while (line >> data)
     {
@@ -187,64 +202,24 @@ inline void ParseLeftHandRule(std::stringstream& line, MooreAutomata& automata, 
     }
 }
 
-inline void ParseUndefinedLinesInLeftHandGrammar(MooreAutomata& automata)
+inline void ParseRightHandGrammarLine(std::stringstream& line, MooreAutomata& automata)
 {
-    for (auto& line: automata.GetUndefinedLines())
-    {
-        std::stringstream ss(line);
-
-        std::string inNoterm;
-        ss >> inNoterm;
-
-        if (automata.GetFinalState().empty())
-        {
-            automata.AddState(inNoterm);
-            automata.SetFinalState(inNoterm);
-        }
-
-        if (automata.GetStartState().empty())
-        {
-            automata.AddState(BASE_STATE);
-            automata.SetStartState(BASE_STATE);
-        }
-
-        ParseLeftHandRule(ss, automata, inNoterm);
-    }
-
-    automata.ClearUndefinedLines();
-}
-
-inline void ParseLeftHandGrammarLine(std::stringstream& line, MooreAutomata& automata)
-{
-    if (!automata.GetUndefinedLines().empty())
-    {
-        ParseUndefinedLinesInLeftHandGrammar(automata);
-    }
-
-    if (automata.GetStartState().empty())
-    {
-        automata.SetStartState(BASE_STATE);
-    }
-
     if (automata.IsEmpty())
     {
         automata.AddState(BASE_STATE);
+        automata.SetFinalState(BASE_STATE);
     }
 
-    std::string inNoterm;
-    line >> inNoterm;
+    std::string curNoterm;
+    line >> curNoterm;
 
-    automata.AddState(inNoterm);
-    if (automata.GetFinalState().empty())
+    if (automata.GetStartState().empty())
     {
-        automata.SetFinalState(inNoterm);
+        automata.SetStartState(curNoterm);
     }
 
-    ParseLeftHandRule(line, automata, inNoterm);
-}
+    automata.AddState(curNoterm);
 
-inline void ParseRightHandRule(std::stringstream& line, MooreAutomata& automata, std::string& curNoterm)
-{
     std::string data;
     while (line >> data)
     {
@@ -273,60 +248,12 @@ inline void ParseRightHandRule(std::stringstream& line, MooreAutomata& automata,
     }
 }
 
-inline void ParseUndefinedLinesInRightHandGrammar(MooreAutomata& automata)
-{
-    for (auto& line: automata.GetUndefinedLines())
-    {
-        std::stringstream ss(line);
-
-        std::string curNoterm;
-        ss >> curNoterm;
-
-        if (automata.GetStartState().empty())
-        {
-            automata.SetStartState(curNoterm);
-        }
-
-        automata.AddState(curNoterm);
-
-        ParseRightHandRule(ss, automata, curNoterm);
-    }
-
-    automata.ClearUndefinedLines();
-}
-
-inline void ParseRightHandGrammarLine(std::stringstream& line, MooreAutomata& automata)
-{
-    if (automata.GetFinalState().empty())
-    {
-        automata.AddState(BASE_STATE);
-        automata.SetFinalState(BASE_STATE);
-    }
-
-    if (!automata.GetUndefinedLines().empty())
-    {
-        ParseUndefinedLinesInRightHandGrammar(automata);
-    }
-
-    std::string curNoterm;
-    line >> curNoterm;
-
-    if (automata.GetStartState().empty())
-    {
-        automata.SetStartState(curNoterm);
-    }
-
-    automata.AddState(curNoterm);
-
-    ParseRightHandRule(line, automata, curNoterm);
-}
-
 inline void ParseLine(MooreAutomata& automata, std::optional<bool>& isLeftHandGrammar, const std::string& line)
 {
     std::stringstream ss(line);
     if (!isLeftHandGrammar.has_value())
     {
-        automata.AddUndefinedString(line);
+        ParseRightHandGrammarLine(ss, automata);
     }
     else if (isLeftHandGrammar.value())
     {
@@ -341,6 +268,7 @@ inline void ParseLine(MooreAutomata& automata, std::optional<bool>& isLeftHandGr
 inline void ParseLines(MooreAutomata& automata, std::istream& input)
 {
     std::optional<bool> isLeftHandGrammar;
+    std::string firstState;
 
     while (true)
     {
