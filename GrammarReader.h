@@ -69,21 +69,6 @@ inline bool IsEndOfRule(const std::string& line)
     throw std::invalid_argument("End of rule is not found");
 }
 
-inline std::optional<bool> GetTypeOfGrammar(const std::string& line)
-{
-    if (std::regex_match(line, LEFT_HAND_GRAMMAR_REG))
-    {
-        return true;
-    }
-
-    if (std::regex_match(line, RIGHT_HAND_GRAMMAR_REG))
-    {
-        return false;
-    }
-
-    return std::nullopt;
-}
-
 inline bool IsLeftHandRule(const std::string& line)
 {
     return std::regex_match(line, LEFT_HAND_GRAMMAR_REG);
@@ -97,6 +82,23 @@ inline bool IsRightHandRule(const std::string& line)
 inline bool IsOnlyWithTermRule(const std::string& line)
 {
     return std::regex_match(line, ONLY_WITH_TERM_GRAMMAR_REG);
+}
+
+inline void SetTypeOfGrammar(std::optional<bool>& isLeftHandGrammar, const std::string& line)
+{
+    if (isLeftHandGrammar.has_value() || IsOnlyWithTermRule(line))
+    {
+        return;
+    }
+
+    if (IsLeftHandRule(line))
+    {
+        isLeftHandGrammar = true;
+    }
+    else if (IsRightHandRule(line))
+    {
+        isLeftHandGrammar = false;
+    }
 }
 
 inline bool IsCorrectGrammar(const std::string& line, std::optional<bool>& isLeftHandGrammar)
@@ -136,15 +138,14 @@ inline std::string GetOneRule(std::istream& input, std::optional<bool>& isLeftHa
 {
     if (IsCorrectGrammar(line, isLeftHandGrammar))
     {
+        SetTypeOfGrammar(isLeftHandGrammar, line);
+
         return line;
     }
 
     JoinRules(input, line);
 
-    if (!isLeftHandGrammar.has_value() && !IsOnlyWithTermRule(line))
-    {
-        isLeftHandGrammar = GetTypeOfGrammar(line);
-    }
+    SetTypeOfGrammar(isLeftHandGrammar, line);
 
     if (IsCorrectGrammar(line, isLeftHandGrammar))
     {
