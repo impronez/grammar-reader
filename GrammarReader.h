@@ -101,27 +101,9 @@ inline bool IsOnlyWithTermRule(const std::string& line)
 
 inline bool IsCorrectGrammar(const std::string& line, std::optional<bool>& isLeftHandGrammar)
 {
-    if (IsOnlyWithTermRule(line))
+    if (IsLeftHandRule(line) || IsRightHandRule(line) || IsOnlyWithTermRule(line))
     {
         return true;
-    }
-
-    if (IsLeftHandRule(line))
-    {
-        if (!isLeftHandGrammar.has_value())
-        {
-            isLeftHandGrammar = true;
-        }
-
-        return true;
-    }
-
-    if (IsRightHandRule(line))
-    {
-        if (!isLeftHandGrammar.has_value())
-        {
-            isLeftHandGrammar = true;
-        }
     }
 
     return false;
