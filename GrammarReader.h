@@ -389,6 +389,8 @@ inline void ParseOnlyWithTermRule(std::stringstream& line, MooreAutomata& automa
 
 inline void ParseUndefinedLines(MooreAutomata& automata)
 {
+    automata.SetFinalState(BASE_STATE);
+    automata.AddState(BASE_STATE);
     for (auto& line: automata.GetUndefinedLines())
     {
         std::stringstream ss(line);
@@ -403,7 +405,7 @@ inline void ParseUndefinedLines(MooreAutomata& automata)
 
         automata.AddState(curNoterm);
 
-        ParseRightHandRule(ss, automata, curNoterm);
+        ParseOnlyWithTermRule(ss, automata, curNoterm);
     }
 
     automata.ClearUndefinedLines();
@@ -415,7 +417,7 @@ inline MooreAutomata GetAutomata(std::ifstream& input)
 
     ParseLines(automata, input);
 
-    if (automata.GetUndefinedLines().empty())
+    if (!automata.GetUndefinedLines().empty())
     {
         ParseUndefinedLines(automata);
     }
